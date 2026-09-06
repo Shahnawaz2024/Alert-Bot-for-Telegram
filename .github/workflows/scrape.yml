@@ -1,0 +1,27 @@
+name: Scrape and Alert
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # every 30 min
+  workflow_dispatch:  # manual trigger button too
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: python main.py
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+      - name: Commit updated state
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add seen.json
+          git commit -m "update seen state" || echo "no changes"
+          git push
